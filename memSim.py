@@ -17,10 +17,16 @@ class TLB:
             return None
     
     def insert(self, page_num, frame_num):
+        if frame_num in self.dict.values(): 
+            for key, value in self.dict.items():
+                if value == frame_num:
+                    self.dict.pop(key)
+                    break
+
         self.dict[page_num] = frame_num
         self.order.append(page_num)
 
-        if len(self.dict) > self.num_max:
+        if len(self.dict) >= self.num_max:
             pn = self.order.pop(0)
             self.dict.pop(pn)
 
@@ -37,6 +43,11 @@ class PageTable:
             return None
     
     def insert(self, page_num, frame_num):
+        if frame_num in self.dict.values(): 
+            for key, value in self.dict.items():
+                if value == frame_num:
+                    self.dict.pop(key)
+                    break
         self.dict[page_num] = frame_num       
 
 class Memory:
@@ -73,6 +84,9 @@ class Memory:
             backing.close()
         self.cur_frame += 1
 
+        if self.cur_frame >= self.num_frames:
+            self.cur_frame = 0
+        
         self.insert(self.cur_frame, data)
         return self.cur_frame
         
@@ -88,7 +102,8 @@ def main():
     # frames = args.frames
     # pra = args.pra
     # file = args.refseqfile
-    frames = 5
+
+    frames = 10
     file = "addresses.txt"
     pra = "FIFO"
 
@@ -127,18 +142,20 @@ def main():
                 frame_num = memory.load_from_backing(page_num)
                 frame, val = memory.find(frame_num, offset_num)
 
+                print("PAGE_FAULT")
                 page_table.insert(page_num, frame_num)
                 tlb.insert(page_num, frame_num)
                 page_fault += 1
             else :
                 frame, val = memory.find(frame_num, offset_num)
         else :
+            print(frame_num, "HIT")
             frame, val = memory.find(frame_num, offset_num)
             tlb_hits += 1
 
        
         # print out all of the stats and everything needed.
-        print(address, val, frame_num, sep=", ", end=",\n")
+        print(address, page_num, val, frame_num, sep=", ", end=",\n")
         print(frame)
         print("\n")
 
