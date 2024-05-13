@@ -88,7 +88,7 @@ def main():
     # frames = args.frames
     # pra = args.pra
     # file = args.refseqfile
-    frames = 256
+    frames = 5
     file = "addresses.txt"
     pra = "FIFO"
 
