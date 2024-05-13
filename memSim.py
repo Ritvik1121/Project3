@@ -102,6 +102,7 @@ def main():
     # frames = args.frames
     # pra = args.pra
     # file = args.refseqfile
+
     frames = 10
     file = "addresses.txt"
     pra = "FIFO"
