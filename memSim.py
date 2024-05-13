@@ -50,8 +50,8 @@ class Memory:
     
     def find(self, frame):
         try:
-            page = self.dict.get(frame)
-            return page
+            data = self.dict.get(frame)
+            return data
         except:
             return None
     
@@ -85,7 +85,7 @@ def main():
     # frames = args.frames
     # pra = args.pra
     # file = args.refseqfile
-    frames = 256
+    frames = 5
     file = "addresses.txt"
     pra = "FIFO"
 
@@ -134,7 +134,7 @@ def main():
 
        
         # print out all of the stats and everything needed.
-        
+
         # i need to figure out what the value is 
         print(address, frame_num, frame)
 
