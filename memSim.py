@@ -52,12 +52,13 @@ class PageTable:
 
 class Memory:
     # class for the physical memory it will map frame number to the actual data 
-    def __init__(self, frames):
+    def __init__(self, frames, pra):
         self.dict = {}
         self.num_frames = frames
         self.order = [] # queue used to keep track of FIFO
         self.backing = "BACKING_STORE.bin"
         self.cur_frame = -1
+        self.pra = pra
     
     
     def find(self, frame, offset):
@@ -77,6 +78,11 @@ class Memory:
             fr = self.order.pop(0)
             self.dict.pop(fr)
     
+    def update_order(self,remove,insert):
+        self.order.remove(remove)
+        self.order.append(insert)
+        print(self.order)
+
     def load_from_backing(self, page_num):
         with open(self.backing, "rb") as backing:
             backing.seek(256 * page_num)
@@ -84,9 +90,13 @@ class Memory:
             backing.close()
         self.cur_frame += 1
 
-        if self.cur_frame >= self.num_frames:
-            self.cur_frame = 0
-        
+        if self.pra == "FIFO":
+            if self.cur_frame >= self.num_frames:
+                self.cur_frame = 0
+        elif self.pra == "LRU":
+            if len(self.order) >= self.num_frames:
+                self.cur_frame = self.order.pop(0)
+                self.order.append(self.cur_frame)
         self.insert(self.cur_frame, data)
         return self.cur_frame
         
@@ -103,9 +113,9 @@ def main():
     # pra = args.pra
     # file = args.refseqfile
 
-    frames = 10
+    frames = 5
     file = "addresses.txt"
-    pra = "FIFO"
+    pra = "LRU"
 
     addresses = []
     with open(file, "r") as f:
@@ -117,7 +127,7 @@ def main():
 
     tlb = TLB()
     page_table = PageTable(frames)
-    memory = Memory(frames)
+    memory = Memory(frames, pra)
 
     tlb_hits = 0
     tlb_miss = 0
@@ -150,6 +160,8 @@ def main():
                 frame, val = memory.find(frame_num, offset_num)
         else :
             print(frame_num, "HIT")
+            if pra == "LRU":
+                memory.update_order(frame_num,frame_num)
             frame, val = memory.find(frame_num, offset_num)
             tlb_hits += 1
 
