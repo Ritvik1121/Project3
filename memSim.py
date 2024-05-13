@@ -1,4 +1,5 @@
 import argparse
+#!/usr/bin/python3
 
 
 # class for page table using fifo 
@@ -48,12 +49,13 @@ class Memory:
         self.cur_frame = -1
     
     
-    def find(self, frame):
+    def find(self, frame, offset):
         try:
             page = self.dict.get(frame)
-            return page
+            val = ((page[offset] + 128) & 0xFF) - 128
+            return page, val
         except:
-            return None
+            return None, None
     
     ## this uses FIFO I think
     def insert(self, frame, data):
@@ -73,6 +75,7 @@ class Memory:
 
         self.insert(self.cur_frame, data)
         return self.cur_frame
+        
 
 
 def main():
@@ -109,6 +112,7 @@ def main():
     for address in addresses:
         # calculate the page number and offset stuff
         page_num = (address >> 8) & 0xFF
+        offset_num = address & 0xFF
         
         num_addresses += 1
         # look up in tlb
@@ -121,22 +125,22 @@ def main():
             if frame_num is None:
                 # if not in page table load from backing and put it in memory and 
                 frame_num = memory.load_from_backing(page_num)
-                frame = memory.find(frame_num)
+                frame, val = memory.find(frame_num, offset_num)
 
                 page_table.insert(page_num, frame_num)
                 tlb.insert(page_num, frame_num)
                 page_fault += 1
             else :
-                frame = memory.find(frame_num)
+                frame, val = memory.find(frame_num, offset_num)
         else :
-            frame = memory.find(frame_num)
+            frame, val = memory.find(frame_num, offset_num)
             tlb_hits += 1
 
        
         # print out all of the stats and everything needed.
-        
-        # i need to figure out what the value is 
-        print(address, frame_num, frame)
+        print(address, val, frame_num, sep=", ", end=",\n")
+        print(frame)
+        print("\n")
 
     print("Number of Translated Addresses: ", num_addresses)
     print("Page Faults: ", page_fault)
@@ -144,6 +148,5 @@ def main():
     print("TLB Hits: ", tlb_hits)
     print("TLB Misses: ", tlb_miss)
     print("TLB Hit Rate: ", tlb_hits/num_addresses)
-
 
 main()
