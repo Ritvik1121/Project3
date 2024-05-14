@@ -1,8 +1,6 @@
-import argparse
 #!/usr/bin/python3
+import argparse
 
-
-# class for page table using fifo 
 class TLB:
     def __init__(self):
         self.num_max = 5
@@ -60,11 +58,10 @@ class Memory:
     def __init__(self, frames, pra):
         self.dict = {}
         self.num_frames = frames
-        self.order = [] # queue used to keep track of FIFO
+        self.order = [] 
         self.backing = "BACKING_STORE.bin"
         self.cur_frame = -1
         self.pra = pra
-    
     
     def find(self, frame, offset):
         try:
@@ -83,7 +80,6 @@ class Memory:
         self.order.remove(remove)
         self.order.append(insert)
 
-    ## sets the order to default order if frames filled
     def default_order(self):
         if len(self.order) >= self.num_frames:
             self.order = [i for i in range(self.num_frames)]
@@ -94,26 +90,16 @@ class Memory:
             data = backing.read(256)
             backing.close()
 
-        # if self.pra == "FIFO":
-        #     if self.cur_frame >= self.num_frames:
-        #         self.cur_frame = 0
-        # elif self.pra == "LRU":
         if len(self.order) >= self.num_frames:
             self.cur_frame = self.order.pop(0)
             self.order.append(self.cur_frame)
         else:
             self.cur_frame += 1
 
-        # elif self.pra == "OPT":
-        #     if len(self.order) >= self.num_frames:
-        #         self.cur_frame = self.order[0]
         self.insert(self.cur_frame, data)
-        #print(self.order)
 
         return self.cur_frame
         
-
-
 def main():
     parser = argparse.ArgumentParser(description="Virtual Memory Simulator")
     parser.add_argument("refseqfile", type=argparse.FileType(), help="Reference sequence file")
@@ -125,23 +111,12 @@ def main():
     pra = args.pra
     file = args.refseqfile
 
-    # frames = 5
-    # file = "addresses.txt"
-    # pra = "OPT"
-
     addresses = file.read().split("\n")
     for i, address in enumerate(addresses):
         try:
             addresses[i] = int(address)
         except:
             addresses.remove(address)
-
-    # with open(file, "r") as f:
-    #     for line in f:
-    #         line = line.strip(("\n"))
-    #         address = int(line)
-    #         addresses.append(address)
-    #     f.close()
 
     tlb = TLB()
     page_table = PageTable(frames)
@@ -153,7 +128,7 @@ def main():
     num_addresses = 0
 
     for index, address in enumerate(addresses):
-        # calculate the page number and offset stuff
+        # calculate the page number and offset
         page_num = (address >> 8) & 0xFF
         offset_num = address & 0xFF
         
@@ -181,7 +156,6 @@ def main():
                 frame_num = memory.load_from_backing(page_num)
                 frame, val = memory.find(frame_num, offset_num)
 
-                #print("PAGE_FAULT")
                 page_table.insert(page_num, frame_num)
                 tlb.insert(page_num, frame_num)
                 page_fault += 1
@@ -189,17 +163,13 @@ def main():
                 frame, val = memory.find(frame_num, offset_num)
                 tlb.insert(page_num, frame_num)
         else :
-            #print(frame_num, "HIT")
             if pra == "LRU":
                 memory.update_order(frame_num,frame_num)
             frame, val = memory.find(frame_num, offset_num)
             tlb_hits += 1
 
-       
         # print out all of the stats and everything needed.
         print(address, val, frame_num, frame.hex().upper(), sep=", ", end="\n")
-        #print(frame)
-        #print("\n")
 
     print("Number of Translated Addresses =", num_addresses)
     print("Page Faults =", page_fault)
@@ -208,4 +178,5 @@ def main():
     print("TLB Misses =", tlb_miss)
     print("TLB Hit Rate = {:.3f}".format(round(tlb_hits/num_addresses,3)))
 
-main()
+if __name__ == "__main__":
+    main()
